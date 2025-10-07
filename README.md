@@ -10,16 +10,16 @@
 
 ## 📚 Projeto: Sistema de Biblioteca
 **Descrição**: Um sistema em C que permite ao operador gerenciar um acervo de biblioteca através de um menu interativo. O programa possibilita o cadastro de livros e usuários, consulta de informações pelo código de barras e a realização de empréstimos, verificando pendências e validade da senha do usuário. O desenvolvimento aplica os principais conceitos da Unidade 1, como condicionais, repetições, vetores e funções.
-**Repositório**:
+**Repositório**: https://github.com/louisecosta/Costa-AnaLouise-itp-u1-2025-2
 
-**Vídeo de Demonstração**: 
+**Vídeo de Demonstração**: https://www.youtube.com/watch?v=v4s7H6xJb2c
 
 ### Funcionalidades Implementadas:
 - **Menu Interativo:** Permite ao operador navegar entre as diferentes opções do sistema.
 - **Cadastro de Livros:** Registra dados como título, autor, ano de publicação, número de páginas, ISBN, localização e código de barras.
 - **Cadastro de Usuários:** Registra nome, ano de nascimento, e-mail e senha numérica de 6 dígitos.
 - **Consulta de Livros:** Busca por código de barras e exibe informações detalhadas, incluindo status (disponível ou emprestado).
-- **Empréstimo de Livros:**Permite que um usuário solicite um empréstimo, validando senha, verificando pendências e a disponibilidade do livro.
+- **Empréstimo de Livros:** Permite que um usuário solicite um empréstimo, validando senha, verificando pendências e a disponibilidade do livro.
 
 ### Conceitos da U1 Aplicados:
 * **Estruturas condicionais:** Utilizadas para validar entradas e controlar o fluxo do sistema (ex.: ano válido, senha correta, disponibilidade de livro).
