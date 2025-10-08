@@ -10,6 +10,7 @@
 
 ## 📚 Projeto: Sistema de Biblioteca
 **Descrição**: Um sistema em C que permite ao operador gerenciar um acervo de biblioteca através de um menu interativo. O programa possibilita o cadastro de livros e usuários, consulta de informações pelo código de barras e a realização de empréstimos, verificando pendências e validade da senha do usuário. O desenvolvimento aplica os principais conceitos da Unidade 1, como condicionais, repetições, vetores e funções.
+
 **Repositório**: https://github.com/louisecosta/Costa-AnaLouise-itp-u1-2025-2
 
 **Vídeo de Demonstração**: https://www.youtube.com/watch?v=v4s7H6xJb2c
