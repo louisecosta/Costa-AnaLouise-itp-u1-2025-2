@@ -3,6 +3,7 @@
 Instruções para compilar e executar as soluções dos problemas desta lista
 
 ## Problema 1
+
 gcc -o problema1 problema1.c
 ./problema1
 
