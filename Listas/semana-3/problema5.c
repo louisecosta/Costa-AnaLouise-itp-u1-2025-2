@@ -1,4 +1,5 @@
 #include <stdio.h>
+
 int main() {
     float valorCompra, desconto = 0.0, valorFinal;
     float percentualDesconto = 0.0;

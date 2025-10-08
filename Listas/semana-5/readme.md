@@ -1,4 +1,4 @@
-## Semana 2
+## Semana 4b
 
 Instruções para compilar e executar as soluções dos problemas desta lista
 
@@ -13,7 +13,3 @@ gcc -o problema2 problema2.c -lm
 ## Problema 3
 gcc -o problema3 problema3.c -lm
 ./problema3
-
-## Problema 4
-gcc -o problema4 problema4.c
-./problema4
