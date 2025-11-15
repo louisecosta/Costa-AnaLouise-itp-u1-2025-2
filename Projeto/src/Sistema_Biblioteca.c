@@ -1,50 +1,67 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdbool.h>
 
 // Constantes
-#define MAX_LIVROS 100
-#define MAX_USUARIOS 100
-#define MAX_TEXTO 100  // Tamanho máximo para nomes, títulos, etc.
+#define MAX_TEXTO 100  // Tamanho maximo para nomes, titulos, etc.
 #define SENHA_DIGITOS 6
 #define PRAZO_DIAS 14
+#define TAM_INICIAL 10  // Tamanho inicial para alocacao dinamica
 
-// Arrays para livros
-char titulos[MAX_LIVROS][MAX_TEXTO];
-int anos[MAX_LIVROS];
-char autores[MAX_LIVROS][MAX_TEXTO];
-int codBarras[MAX_LIVROS];
-int numSistema[MAX_LIVROS];
-int numPaginas[MAX_LIVROS];
-char localizacao[MAX_LIVROS][MAX_TEXTO];
-char isbn[MAX_LIVROS][MAX_TEXTO];
+// Estrutura para Livro
+typedef struct {
+    char titulo[MAX_TEXTO];
+    int ano;
+    char autor[MAX_TEXTO];
+    int codBarras;
+    int numSistema;
+    int numPaginas;
+    char localizacao[MAX_TEXTO];
+    char isbn[MAX_TEXTO];
+    bool emprestado;
+    int diasEmprestado;  // Dias desde o emprestimo (simulado)
+} Livro;
+
+// Estrutura para Usuario
+typedef struct {
+    char nome[MAX_TEXTO];
+    int anoNascimento;
+    char email[MAX_TEXTO];
+    int senha;
+    bool pendencia;
+} Usuario;
+
+// Ponteiros para arrays dinamicos
+Livro *livros = NULL;
+Usuario *usuarios = NULL;
 int contadorLivros = 0;
-
-// Arrays para usuários
-char nomesUsuarios[MAX_USUARIOS][MAX_TEXTO];
-int anosNascimento[MAX_USUARIOS];
-char emails[MAX_USUARIOS][MAX_TEXTO];
-int senhas[MAX_USUARIOS];
-bool pendencias[MAX_USUARIOS];
+int capacidadeLivros = TAM_INICIAL;
 int contadorUsuarios = 0;
-
-// Status de empréstimo
-bool emprestados[MAX_LIVROS];
+int capacidadeUsuarios = TAM_INICIAL;
 
 // Nome do operador
 char nomeOperador[MAX_TEXTO];
 
-// Função para limpar buffer
+// Funcao para limpar buffer
 void limparBuffer() {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
-// Função para validar número
+//2.2
+// Funcao para ler string com fgets (robusta)
+void lerString(char *str, int tamanho) {
+    fgets(str, tamanho, stdin);
+    str[strcspn(str, "\n")] = '\0';  // Remove o \n
+}
+
+// Funcao para validar numero
 bool validarNumero(int valor, int min, int max) {
     return (valor >= min && valor <= max);
 }
 
-// Função para validar senha
+// Funcao para validar senha
 bool validarSenha(int senha) {
     if (senha < 100000 || senha > 999999) return false;
     int temp = senha;
@@ -56,75 +73,84 @@ bool validarSenha(int senha) {
     return (digitos == SENHA_DIGITOS);
 }
 
-// Função auxiliar para comparar strings manualmente
-bool compararStrings(char str1[], char str2[]) {
-    int i = 0;
-    while (str1[i] != '\0' && str2[i] != '\0') {
-        if (str1[i] != str2[i]) return false;
-        i++;
+// Funcao para realocar memoria se necessario
+void realocarLivros() {
+    capacidadeLivros *= 2;
+    livros = (Livro *)realloc(livros, capacidadeLivros * sizeof(Livro));
+    if (livros == NULL) {
+        printf("Erro: Falha na alocacao de memoria!\n");
+        exit(1);
     }
-    return (str1[i] == str2[i]);
 }
 
+void realocarUsuarios() {
+    capacidadeUsuarios *= 2;
+    usuarios = (Usuario *)realloc(usuarios, capacidadeUsuarios * sizeof(Usuario));
+    if (usuarios == NULL) {
+        printf("Erro: Falha na alocacao de memoria!\n");
+        exit(1);
+    }
+}
+//5.3
 // Cadastro de livro
 void cadastrarLivro() {
-    if (contadorLivros >= MAX_LIVROS) {
-        printf("Erro: Acervo cheio!\n");
-        return;
+    if (contadorLivros >= capacidadeLivros) {
+        realocarLivros();
     }
 
     int id = contadorLivros;
     bool valido = true;
 
     printf("--- Cadastro de Livro ---\n");
-    printf("Título: ");
-    scanf("%s", titulos[id]);
-    limparBuffer();
+    printf("Titulo: ");
+    //5.4
+    lerString(livros[id].titulo, MAX_TEXTO);
 
-    printf("Ano de publicação (1900-2023): ");
-    scanf("%d", &anos[id]);
-    if (!validarNumero(anos[id], 1900, 2023)) {
+    printf("Ano de publicacao (1900-2023): ");
+    scanf("%d", &livros[id].ano);
+    limparBuffer();
+    if (!validarNumero(livros[id].ano, 1900, 2023)) {
         valido = false;
-        printf("Erro: Ano inválido!\n");
+        printf("Erro: Ano invalido!\n");
     }
 
     printf("Autor: ");
-    scanf("%s", autores[id]);
+    lerString(livros[id].autor, MAX_TEXTO);
+
+    printf("Codigo de barras: ");
+    scanf("%d", &livros[id].codBarras);
     limparBuffer();
-
-    printf("Código de barras: ");
-    scanf("%d", &codBarras[id]);
-    if (codBarras[id] <= 0) {
+    if (livros[id].codBarras <= 0) {
         valido = false;
-        printf("Erro: Código inválido!\n");
+        printf("Erro: Codigo invalido!\n");
     }
 
-    printf("Número de sistema: ");
-    scanf("%d", &numSistema[id]);
-    if (numSistema[id] <= 0) {
-        valido = false;
-        printf("Erro: Número inválido!\n");
-    }
-
-    printf("Número de páginas: ");
-    scanf("%d", &numPaginas[id]);
-    if (numPaginas[id] <= 0) {
-        valido = false;
-        printf("Erro: Páginas inválidas!\n");
-    }
-
-    printf("Localização: ");
-    scanf("%s", localizacao[id]);
+    printf("Numero de sistema: ");
+    scanf("%d", &livros[id].numSistema);
     limparBuffer();
+    if (livros[id].numSistema <= 0) {
+        valido = false;
+        printf("Erro: Numero invalido!\n");
+    }
+
+    printf("Numero de paginas: ");
+    scanf("%d", &livros[id].numPaginas);
+    limparBuffer();
+    if (livros[id].numPaginas <= 0) {
+        valido = false;
+        printf("Erro: Paginas invalidas!\n");
+    }
+
+    printf("Localizacao: ");
+    lerString(livros[id].localizacao, MAX_TEXTO);
 
     printf("ISBN: ");
-    scanf("%s", isbn[id]);
-    limparBuffer();
+    lerString(livros[id].isbn, MAX_TEXTO);
 
-    // Verifica se faltam infos básicas
-    if (!valido || titulos[id][0] == '\0' || autores[id][0] == '\0' || isbn[id][0] == '\0') {
-        printf("Erro: Faltam informações do material a ser cadastrado.\n");
-        // Opção de reiniciar
+    // Verifica se faltam infos basicas
+    if (!valido || strlen(livros[id].titulo) == 0 || strlen(livros[id].autor) == 0 || strlen(livros[id].isbn) == 0) {
+        printf("Erro: Faltam informacoes do material a ser cadastrado.\n");
+        // Opcao de reiniciar
         int opcao;
         do {
             printf("1 - Reiniciar cadastro | 0 - Voltar ao menu\n");
@@ -137,52 +163,52 @@ void cadastrarLivro() {
         } while (opcao != 0);
     } else {
         printf("Material cadastrado com sucesso!\n");
-        printf("Título: %s | Ano: %d | Autor: %s | Cod. Barras: %d | ISBN: %s\n",
-               titulos[id], anos[id], autores[id], codBarras[id], isbn[id]);
+        printf("Titulo: %s | Ano: %d | Autor: %s | Cod. Barras: %d | ISBN: %s\n",
+               livros[id].titulo, livros[id].ano, livros[id].autor, livros[id].codBarras, livros[id].isbn);
+        livros[id].emprestado = false;
+        livros[id].diasEmprestado = 0;
         contadorLivros++;
-        emprestados[id] = false;
     }
 }
 
-// Cadastro de usuário
+// Cadastro de usuario
 void cadastrarUsuario() {
-    if (contadorUsuarios >= MAX_USUARIOS) {
-        printf("Erro: Limite de usuários atingido!\n");
-        return;
+    if (contadorUsuarios >= capacidadeUsuarios) {
+        realocarUsuarios();
     }
 
     int id = contadorUsuarios;
     bool valido = true;
 
-    printf("--- Cadastro de Usuário ---\n");
+    printf("--- Cadastro de Usuario ---\n");
     printf("Nome: ");
-    scanf("%s", nomesUsuarios[id]);
-    limparBuffer();
+    lerString(usuarios[id].nome, MAX_TEXTO);
 
     printf("Ano de nascimento (1900-2023): ");
-    scanf("%d", &anosNascimento[id]);
-    if (!validarNumero(anosNascimento[id], 1900, 2023)) {
+    scanf("%d", &usuarios[id].anoNascimento);
+    limparBuffer();
+    if (!validarNumero(usuarios[id].anoNascimento, 1900, 2023)) {
         valido = false;
     }
 
     printf("Email: ");
-    scanf("%s", emails[id]);
-    limparBuffer();
+    lerString(usuarios[id].email, MAX_TEXTO);
 
-    // Validação de senha
+    // Validacao de senha
     int senha;
     do {
-        printf("Senha (6 dígitos numéricos): ");
+        printf("Senha (6 digitos numericos): ");
         scanf("%d", &senha);
+        limparBuffer();
         if (!validarSenha(senha)) {
-            printf("Erro: Senha deve ter exatamente 6 dígitos numéricos.\n");
+            printf("Erro: Senha deve ter exatamente 6 digitos numericos.\n");
         }
     } while (!validarSenha(senha));
-    senhas[id] = senha;
-    pendencias[id] = false;
+    usuarios[id].senha = senha;
+    usuarios[id].pendencia = false;
 
-    if (!valido || nomesUsuarios[id][0] == '\0' || emails[id][0] == '\0') {
-        printf("Erro: Faltam informações do usuário.\n");
+    if (!valido || strlen(usuarios[id].nome) == 0 || strlen(usuarios[id].email) == 0) {
+        printf("Erro: Faltam informacoes do usuario.\n");
         int opcao;
         do {
             printf("1 - Reiniciar | 0 - Voltar ao menu\n");
@@ -194,12 +220,12 @@ void cadastrarUsuario() {
             }
         } while (opcao != 0);
     } else {
-        printf("Usuário cadastrado com sucesso!\n");
+        printf("Usuario cadastrado com sucesso!\n");
         contadorUsuarios++;
     }
 }
 
-// Consulta de livro 
+// Consulta de livro por codigo
 void consultarLivro() {
     if (contadorLivros == 0) {
         printf("Nenhum livro cadastrado.\n");
@@ -208,27 +234,27 @@ void consultarLivro() {
 
     int codBusca;
     printf("--- Consulta de Livro ---\n");
-    printf("Código de barras: ");
+    printf("Codigo de barras: ");
     scanf("%d", &codBusca);
     limparBuffer();
 
     bool encontrado = false;
     for (int i = 0; i < contadorLivros; i++) {
-        if (codBarras[i] == codBusca) {
+        if (livros[i].codBarras == codBusca) {
             printf("Livro encontrado!\n");
-            printf("Título: %s | Autor: %s | Ano: %d | Páginas: %d | Local: %s | ISBN: %s | Status: %s\n",
-                   titulos[i], autores[i], anos[i], numPaginas[i], localizacao[i], isbn[i],
-                   (emprestados[i] ? "Emprestado" : "Disponível"));
+            printf("Titulo: %s | Autor: %s | Ano: %d | Paginas: %d | Local: %s | ISBN: %s | Status: %s\n",
+                   livros[i].titulo, livros[i].autor, livros[i].ano, livros[i].numPaginas, livros[i].localizacao, livros[i].isbn,
+                   (livros[i].emprestado ? "Emprestado" : "Disponivel"));
             encontrado = true;
             break;
         }
     }
 
     if (!encontrado) {
-        printf("Livro não encontrado.\n");
+        printf("Livro nao encontrado.\n");
     }
 
-    // Opção de continuar
+    // Opcao de continuar
     int opcao;
     do {
         printf("1 - Nova consulta | 0 - Voltar ao menu\n");
@@ -241,131 +267,263 @@ void consultarLivro() {
     } while (opcao != 0);
 }
 
-// Empréstimo 
+// Busca de livros por string (titulo ou autor)
+void buscarLivroPorString() {
+    if (contadorLivros == 0) {
+        printf("Nenhum livro cadastrado.\n");
+        return;
+    }
+
+    char busca[MAX_TEXTO];
+    printf("--- Busca de Livro por Titulo ou Autor ---\n");
+    printf("Digite o termo de busca: ");
+    lerString(busca, MAX_TEXTO);
+//2.3
+    bool encontrado = false;
+    for (int i = 0; i < contadorLivros; i++) {
+        if (strstr(livros[i].titulo, busca) != NULL || strstr(livros[i].autor, busca) != NULL) {
+            printf("Livro encontrado!\n");
+            printf("Titulo: %s | Autor: %s | Ano: %d | Paginas: %d | Local: %s | ISBN: %s | Status: %s\n",
+                   livros[i].titulo, livros[i].autor, livros[i].ano, livros[i].numPaginas, livros[i].localizacao, livros[i].isbn,
+                   (livros[i].emprestado ? "Emprestado" : "Disponivel"));
+            encontrado = true;
+        }
+    }
+
+    if (!encontrado) {
+        printf("Nenhum livro encontrado com o termo '%s'.\n", busca);
+    }
+}
+
+// Relatorio tabular de livros (usando matriz para tabular)
+void relatorioLivros() {
+    if (contadorLivros == 0) {
+        printf("Nenhum livro cadastrado.\n");
+        return;
+    }
+//4.1
+    // Matriz para relatorio (linhas: livros, colunas: campos)
+    char relatorio[contadorLivros][6][MAX_TEXTO];  // 6 colunas: Titulo, Autor, Ano, Paginas, Local, Status
+
+    for (int i = 0; i < contadorLivros; i++) {
+        strcpy(relatorio[i][0], livros[i].titulo);
+        strcpy(relatorio[i][1], livros[i].autor);
+        sprintf(relatorio[i][2], "%d", livros[i].ano);
+        sprintf(relatorio[i][3], "%d", livros[i].numPaginas);
+        strcpy(relatorio[i][4], livros[i].localizacao);
+        strcpy(relatorio[i][5], livros[i].emprestado ? "Emprestado" : "Disponivel");
+    }
+//3.1
+    // Imprimir tabela com loops aninhados
+    printf("--- Relatorio de Livros ---\n");
+    printf("%-30s %-20s %-4s %-7s %-15s %-10s\n", "Titulo", "Autor", "Ano", "Pags", "Local", "Status");
+    printf("--------------------------------------------------------------------------------\n");
+    for (int i = 0; i < contadorLivros; i++) {
+        for (int j = 0; j < 6; j++) {
+            if (j == 0) printf("%-30s ", relatorio[i][j]);
+            else if (j == 1) printf("%-20s ", relatorio[i][j]);
+            else if (j == 2) printf("%-4s ", relatorio[i][j]);
+            else if (j == 3) printf("%-7s ", relatorio[i][j]);
+            else if (j == 4) printf("%-15s ", relatorio[i][j]);
+            else printf("%-10s ", relatorio[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+// Emprestimo
 void emprestimo() {
     if (contadorUsuarios == 0 || contadorLivros == 0) {
-        printf("Cadastre usuários e livros primeiro.\n");
+        printf("Cadastre usuarios e livros primeiro.\n");
         return;
     }
 
     char emailBusca[MAX_TEXTO];
-    printf("--- Empréstimo de Livro ---\n");
-    printf("Email do usuário: ");
-    scanf("%s", emailBusca);
-    limparBuffer();
-
-    // Busca usuário (loop while + compararStrings)
+    printf("--- Emprestimo de Livro ---\n");
+    printf("Email do usuario: ");
+    lerString(emailBusca, MAX_TEXTO);
+//2.1
+    // Busca usuario
     int idUsuario = -1;
-    int i = 0;
-    while (i < contadorUsuarios) {
-        if (compararStrings(emailBusca, emails[i])) {
+    for (int i = 0; i < contadorUsuarios; i++) {
+        if (strcmp(emailBusca, usuarios[i].email) == 0) {
             idUsuario = i;
             break;
         }
-        i++;
     }
 
     if (idUsuario == -1) {
-        printf("Usuário não encontrado.\n");
+        printf("Usuario nao encontrado.\n");
         return;
     }
 
-    if (pendencias[idUsuario]) {
-        printf("%s está com multa/pendência.\n", nomesUsuarios[idUsuario]);
+    if (usuarios[idUsuario].pendencia) {
+        printf("%s esta com multa/pendencia.\n", usuarios[idUsuario].nome);
         return;
     }
 
     int codLivro;
-    printf("Código de barras do livro: ");
+    printf("Codigo de barras do livro: ");
     scanf("%d", &codLivro);
     limparBuffer();
 
-    // Busca livro disponível
+    // Busca livro disponivel
     int idLivro = -1;
     for (int j = 0; j < contadorLivros; j++) {
-        if (codBarras[j] == codLivro && !emprestados[j]) {
+        if (livros[j].codBarras == codLivro && !livros[j].emprestado) {
             idLivro = j;
             break;
         }
     }
 
     if (idLivro == -1) {
-        printf("Livro não encontrado ou já emprestado.\n");
+        printf("Livro nao encontrado ou ja emprestado.\n");
         return;
     }
 
     // Verifica senha
     int senha;
-    printf("Senha do usuário: ");
+    printf("Senha do usuario: ");
     scanf("%d", &senha);
-    if (senha != senhas[idUsuario]) {
-        printf("Senha inválida.\n");
+    limparBuffer();
+    if (senha != usuarios[idUsuario].senha) {
+        printf("Senha invalida.\n");
         return;
     }
 
     // Sucesso
-    emprestados[idLivro] = true;
-    printf("Empréstimo para %s finalizado com sucesso!\n", nomesUsuarios[idUsuario]);
-    printf("Prazo: %d dias para devolução.\n", PRAZO_DIAS);
+    livros[idLivro].emprestado = true;
+    livros[idLivro].diasEmprestado = 0;  // Reset dias
+    printf("Emprestimo para %s finalizado com sucesso!\n", usuarios[idUsuario].nome);
+    printf("Prazo: %d dias para devolucao.\n", PRAZO_DIAS);
 }
 
-// Função menu 
+// Devolucao com controle de penalidade
+void devolucao() {
+    if (contadorLivros == 0) {
+        printf("Nenhum livro cadastrado.\n");
+        return;
+    }
+
+    int codLivro;
+    printf("--- Devolucao de Livro ---\n");
+    printf("Codigo de barras do livro: ");
+    scanf("%d", &codLivro);
+    limparBuffer();
+
+    // Busca livro emprestado
+    int idLivro = -1;
+    for (int j = 0; j < contadorLivros; j++) {
+        if (livros[j].codBarras == codLivro && livros[j].emprestado) {
+            idLivro = j;
+            break;
+        }
+    }
+
+    if (idLivro == -1) {
+        printf("Livro nao encontrado ou nao emprestado.\n");
+        return;
+    }
+
+    // Simulacao: perguntar quantos dias passaram
+    int diasPassados;
+    printf("Quantos dias passaram desde o emprestimo? ");
+    scanf("%d", &diasPassados);
+    limparBuffer();
+
+    livros[idLivro].emprestado = false;
+    printf("Devolucao realizada com sucesso!\n");
+
+    if (diasPassados > PRAZO_DIAS) {
+        // Encontrar usuario (simplificado: assumir que sabemos o email, mas para simplicidade, marcar pendencia generica ou pedir email)
+        // Para este exemplo, vamos assumir que precisamos do email do usuario para setar pendencia
+        char emailBusca[MAX_TEXTO];
+        printf("Email do usuario que devolveu: ");
+        lerString(emailBusca, MAX_TEXTO);
+
+        int idUsuario = -1;
+        for (int i = 0; i < contadorUsuarios; i++) {
+            if (strcmp(emailBusca, usuarios[i].email) == 0) {
+                idUsuario = i;
+                break;
+            }
+        }
+
+        if (idUsuario != -1) {
+            usuarios[idUsuario].pendencia = true;
+            printf("Penalidade aplicada: Usuario %s tem pendencia devido ao atraso.\n", usuarios[idUsuario].nome);
+        }
+    }
+}
+
+// Funcao menu
 int menu() {
     int opcao;
     printf("\n--- Sistema de Biblioteca ---\n");
     printf("Operador: %s\n", nomeOperador);
     printf("1 - Cadastro de livros\n");
-    printf("2 - Consultar informações do livro\n");
-    printf("3 - Cadastro de usuário\n");
-    printf("4 - Empréstimo de livro\n");
-    printf("5 - Sair\n");
-    printf("Opção: ");
+    printf("2 - Consultar informacoes do livro\n");
+    printf("3 - Buscar livro por titulo/autor\n");
+    printf("4 - Relatorio tabular de livros\n");
+    printf("5 - Cadastro de usuario\n");
+    printf("6 - Emprestimo de livro\n");
+    printf("7 - Devolucao de livro\n");
+    printf("8 - Sair\n");
+    printf("Opcao: ");
     scanf("%d", &opcao);
     limparBuffer();
 
-    // If/else para opções 
+    // If/else para opcoes
     if (opcao == 1) {
         cadastrarLivro();
     } else if (opcao == 2) {
         consultarLivro();
     } else if (opcao == 3) {
-        cadastrarUsuario();
+        buscarLivroPorString();
     } else if (opcao == 4) {
-        emprestimo();
+        relatorioLivros();
     } else if (opcao == 5) {
+        cadastrarUsuario();
+    } else if (opcao == 6) {
+        emprestimo();
+    } else if (opcao == 7) {
+        devolucao();
+    } else if (opcao == 8) {
         printf("Saindo... Obrigado, %s!\n", nomeOperador);
-        return 5;  // Retorna 5 para sinalizar saída
+        return 8;  // Retorna 8 para sinalizar saida
     } else {
-        printf("Opção inválida! Tente novamente.\n");
-        return menu();  // Recursão simples para repetir menu se inválido
+        printf("Opcao invalida! Tente novamente.\n");
+        return menu();  // Recursao simples para repetir menu se invalido
     }
 
-    return opcao;  // Retorna a opção (não 5, então continua no loop)
+    return opcao;  // Retorna a opcao (nao 8, entao continua no loop)
 }
 
-// Main 
+// Main
 int main() {
-    // Inicializa arrays
-    for (int i = 0; i < MAX_LIVROS; i++) {
-        titulos[i][0] = '\0';
-        emprestados[i] = false;
+    // Alocacao inicial
+    livros = (Livro *)malloc(TAM_INICIAL * sizeof(Livro));
+    if (livros == NULL) {
+        printf("Erro: Falha na alocacao inicial de livros!\n");
+        return 1;
     }
-    for (int i = 0; i < MAX_USUARIOS; i++) {
-        nomesUsuarios[i][0] = '\0';
-        pendencias[i] = false;
+    usuarios = (Usuario *)malloc(TAM_INICIAL * sizeof(Usuario));
+    if (usuarios == NULL) {
+        printf("Erro: Falha na alocacao inicial de usuarios!\n");
+        free(livros);
+        return 1;
     }
-
-    // Entrada do operador 
+    // Entrada do operador
     printf("Bem-vindo ao Sistema de Biblioteca!\n");
     printf("Nome do operador: ");
-    scanf("%s", nomeOperador);
-    limparBuffer();
-
-    // Loop principal
+    lerString(nomeOperador, MAX_TEXTO);
+// Loop principal
     int opcao;
     do {
         opcao = menu();
-    } while (opcao != 5);
-
+    } while (opcao != 8);
+    // Liberação de memória
+    free(livros);
+    free(usuarios);
     return 0;
 }
