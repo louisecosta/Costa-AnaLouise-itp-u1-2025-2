@@ -99,7 +99,7 @@ As soluções para as listas de exercícios da Unidade 1 estão na pasta `listas
 * Problema 3: Campeonato de empates
 * Problema 4: Uma pechincha!
 
-## Semana 10 - Ponteiros e Alocação dinâmica
+### Semana 10 - Ponteiros e Alocação dinâmica
 * Problema 1: Soma de Vetores
 * Problema 2: Ocorrências no vetor
 * Problema 3: Sopa de letrinhas
